@@ -1,19 +1,29 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import Select, { type MultiValue } from 'react-select'
+import { api } from '../api/announcements'
+import { formatDate, parseFromForm } from '../utils/date'
 
 export const Route = createFileRoute('/announcements/$id')({
   component: AnnouncementDetail,
+  loader: async ({ params }) => {
+    return await api.getAnnouncement(params.id)
+  },
 })
 
 function AnnouncementDetail() {
-  const { id } = Route.useParams()
+  const announcement = Route.useLoaderData()
   const navigate = useNavigate()
-  const [form, setForm] = useState<AnnouncementForm>(() =>
-    getMockAnnouncement(id),
-  )
+  const router = useRouter()
 
-  const handlePublish = () => {
+  const [form, setForm] = useState<AnnouncementForm>(() => ({
+    title: announcement.title,
+    content: announcement.content || '',
+    categories: announcement.categories.map((c) => ({ value: c, label: c })),
+    publicationDate: formatDate(announcement.publicationDate),
+  }))
+
+  const handlePublish = async () => {
     if (!form.title.trim()) {
       window.alert('Please enter a title.')
       return
@@ -40,6 +50,16 @@ function AnnouncementDetail() {
       return
     }
 
+    // 1. Send the updated data to your API
+    await api.updateAnnouncement(announcement.id, {
+      title: form.title,
+      content: form.content,
+      categories: form.categories.map((c) => c.value),
+      publicationDate: parseFromForm(form.publicationDate),
+    })
+
+    // 2. Invalidate router cache so the list fetches fresh data, then navigate
+    await router.invalidate()
     navigate({ to: '/announcements' })
   }
 
@@ -146,24 +166,3 @@ const categoryOptions: CategoryOption[] = [
   { value: 'Community events', label: 'Community events' },
   { value: 'Health', label: 'Health' },
 ]
-
-const mockAnnouncementsById: Record<string, AnnouncementForm> = {
-  '1': {
-    title: 'Obrazok contest 3',
-    content: 'dasda',
-    categories: [
-      { value: 'City', label: 'City' },
-      { value: 'Community events', label: 'Community events' },
-    ],
-    publicationDate: '08/10/2023 08:55',
-  },
-}
-
-function getMockAnnouncement(id: string): AnnouncementForm {
-  return mockAnnouncementsById[id] ?? {
-    title: 'Obrazok contest 3',
-    content: 'dasda',
-    categories: [{ value: 'City', label: 'City' }],
-    publicationDate: '08/10/2023 08:55',
-  }
-}

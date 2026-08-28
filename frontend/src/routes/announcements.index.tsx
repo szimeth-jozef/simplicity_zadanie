@@ -6,42 +6,13 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import { api, type Announcement } from '../api/announcements'
+import { formatDate } from '../utils/date'
 
 export const Route = createFileRoute('/announcements/')({
   component: AnnouncementsPage,
+  loader: () => api.getAnnouncements(),
 })
-
-interface Announcement {
-  id: string
-  title: string
-  publicationDate: string
-  lastUpdate: string
-  categories: string[]
-}
-
-const mockAnnouncements: Announcement[] = [
-  { id: '1', title: 'Title 1', publicationDate: '2023-08-11T04:36:00', lastUpdate: '2023-08-11T09:00:00', categories: ['City'] },
-  { id: '2', title: 'Title 2', publicationDate: '2023-08-11T04:36:00', lastUpdate: '2023-08-11T08:30:00', categories: ['City'] },
-  { id: '3', title: 'Title 3', publicationDate: '2023-08-11T04:35:00', lastUpdate: '2023-08-11T07:15:00', categories: ['City'] },
-  { id: '4', title: 'Title 4', publicationDate: '2023-04-19T05:14:00', lastUpdate: '2023-04-19T10:00:00', categories: ['City'] },
-  { id: '5', title: 'Title 5', publicationDate: '2023-04-19T05:11:00', lastUpdate: '2023-04-19T09:45:00', categories: ['City'] },
-  { id: '6', title: 'Title 6', publicationDate: '2023-04-19T05:11:00', lastUpdate: '2023-04-19T09:30:00', categories: ['City'] },
-  { id: '7', title: 'Title 7', publicationDate: '2023-03-24T07:27:00', lastUpdate: '2023-03-24T14:00:00', categories: ['City', 'Health'] },
-  { id: '8', title: 'Title 8', publicationDate: '2023-03-24T07:26:00', lastUpdate: '2023-03-24T13:00:00', categories: ['City', 'Health'] },
-  { id: '9', title: 'Title 9', publicationDate: '2023-03-24T07:26:00', lastUpdate: '2023-03-24T12:00:00', categories: ['City', 'Health'] },
-  { id: '10', title: 'Title 10', publicationDate: '2023-03-24T07:26:00', lastUpdate: '2023-03-24T11:00:00', categories: ['City', 'Health'] },
-]
-
-function formatDate(isoDate: string): string {
-  const date = new Date(isoDate)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${month}/${day}/${year} ${hours}:${minutes}`
-}
 
 const columns: ColumnDef<typeof coreFeatures, Announcement>[] = [
   {
@@ -94,13 +65,14 @@ const columns: ColumnDef<typeof coreFeatures, Announcement>[] = [
 ]
 
 function AnnouncementsPage() {
+  const initialData = Route.useLoaderData()
   const data = useMemo(
     () =>
-      [...mockAnnouncements].sort(
+      [...initialData].sort(
         (a, b) =>
           new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime(),
       ),
-    [],
+    [initialData],
   )
 
   const table = useTable({
