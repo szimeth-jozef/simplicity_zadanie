@@ -1,8 +1,8 @@
 import { db } from "../db/index.js"
 import { announcements } from "../db/schema.js";
-import { ilike, or, and, desc, sql, type SQL } from "drizzle-orm";
+import { ilike, or, and, desc, eq, sql, type SQL } from "drizzle-orm";
 
-type CreateAnnouncementInput = {
+export type AnnouncementInput = {
     title: string;
     content: string;
     categories: string;
@@ -12,7 +12,7 @@ export const createAnnouncement = async ({
     title,
     content,
     categories,
-}: CreateAnnouncementInput) => {
+}: AnnouncementInput) => {
     const [createdAnnouncement] = await db
         .insert(announcements)
         .values({ title, content, categories })
@@ -23,6 +23,19 @@ export const createAnnouncement = async ({
     }
 
     return createdAnnouncement.id;
+}
+
+export const updateAnnouncement = async (
+    id: number,
+    { title, content, categories }: AnnouncementInput,
+) => {
+    const [updatedAnnouncement] = await db
+        .update(announcements)
+        .set({ title, content, categories })
+        .where(eq(announcements.id, id))
+        .returning();
+
+    return updatedAnnouncement;
 }
 
 export const getAnnouncements = async (categories: string[] = [], search?: string) => {
@@ -55,5 +68,5 @@ export const getAnnouncements = async (categories: string[] = [], search?: strin
         .from(announcements)
         // and() merges the array of conditions. If empty, it passes undefined (no filter).
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(announcements.createdAt));
+        .orderBy(desc(announcements.updatedAt));
 }
