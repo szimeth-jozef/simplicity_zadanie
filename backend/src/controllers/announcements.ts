@@ -33,6 +33,15 @@ const parseAnnouncementInput = (
     };
 };
 
+const parseAnnouncementId = (rawId: unknown): number | undefined => {
+    if (typeof rawId !== "string" || !/^[1-9]\d*$/.test(rawId)) {
+        return undefined;
+    }
+
+    const id = Number(rawId);
+    return Number.isSafeInteger(id) ? id : undefined;
+};
+
 export const create = async (req: Request, res: Response) => {
     const input = parseAnnouncementInput(req.body);
 
@@ -51,17 +60,10 @@ export const create = async (req: Request, res: Response) => {
 }
 
 export const update = async (req: Request, res: Response) => {
-    const { id: rawId } = req.params;
+    const id = parseAnnouncementId(req.params.id);
 
-    if (typeof rawId !== "string" || !/^[1-9]\d*$/.test(rawId)) {
+    if (!id) {
         res.status(400).json({ error: "id must be a positive integer" });
-        return;
-    }
-
-    const id = Number(rawId);
-
-    if (!Number.isSafeInteger(id)) {
-        res.status(400).json({ error: "id must be a safe integer" });
         return;
     }
 
@@ -84,6 +86,52 @@ export const update = async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Failed to update announcement" });
+    }
+}
+
+export const getById = async (req: Request, res: Response) => {
+    const id = parseAnnouncementId(req.params.id);
+
+    if (!id) {
+        res.status(400).json({ error: "id must be a positive integer" });
+        return;
+    }
+
+    try {
+        const announcement = await AnnouncementsService.getAnnouncementById(id);
+
+        if (!announcement) {
+            res.status(404).json({ error: "Announcement not found" });
+            return;
+        }
+
+        res.status(200).json(announcement);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to get announcement" });
+    }
+}
+
+export const remove = async (req: Request, res: Response) => {
+    const id = parseAnnouncementId(req.params.id);
+
+    if (!id) {
+        res.status(400).json({ error: "id must be a positive integer" });
+        return;
+    }
+
+    try {
+        const announcement = await AnnouncementsService.deleteAnnouncement(id);
+
+        if (!announcement) {
+            res.status(404).json({ error: "Announcement not found" });
+            return;
+        }
+
+        res.status(204).send();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to delete announcement" });
     }
 }
 

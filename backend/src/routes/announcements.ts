@@ -3,15 +3,10 @@ import * as AnnouncementController from "../controllers/announcements.js";
 
 const router: Router = Router();
 
-// CRUD endpoints
-// [x] Create
-// [ ] Read
-//      [x] Get list
-//      [ ] Get exact
-// [x] Update
-// [ ] Delete
 router.post('/', AnnouncementController.create)
 router.get('/', AnnouncementController.getAll)
+router.get('/:id', AnnouncementController.getById)
 router.put('/:id', AnnouncementController.update)
+router.delete('/:id', AnnouncementController.remove)
 
 export default router;

@@ -38,6 +38,25 @@ export const updateAnnouncement = async (
     return updatedAnnouncement;
 }
 
+export const getAnnouncementById = async (id: number) => {
+    const [announcement] = await db
+        .select()
+        .from(announcements)
+        .where(eq(announcements.id, id))
+        .limit(1);
+
+    return announcement;
+}
+
+export const deleteAnnouncement = async (id: number) => {
+    const [deletedAnnouncement] = await db
+        .delete(announcements)
+        .where(eq(announcements.id, id))
+        .returning({ id: announcements.id });
+
+    return deletedAnnouncement;
+}
+
 export const getAnnouncements = async (categories: string[] = [], search?: string) => {
     const conditions: SQL[] = [];
 
