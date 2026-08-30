@@ -2,19 +2,30 @@ import { db } from "../db/index.js"
 import { announcements } from "../db/schema.js";
 import { ilike, or, and, eq, desc } from "drizzle-orm";
 
-export const createAnnouncement = async () => {
-    await db.insert(announcements).values({
-        title: "Happy birthday",
-        content: "Happy birthday to you",
-        categories: "wishing"
-    })
+type CreateAnnouncementInput = {
+    title: string;
+    content: string;
+    categories: string;
+};
+
+export const createAnnouncement = async ({
+    title,
+    content,
+    categories,
+}: CreateAnnouncementInput) => {
+    const [createdAnnouncement] = await db
+        .insert(announcements)
+        .values({ title, content, categories })
+        .returning({ id: announcements.id });
+
+    if (!createdAnnouncement) {
+        throw new Error("Announcement insert did not return an ID");
+    }
+
+    return createdAnnouncement.id;
 }
 
-export const getAllAnnoucements = async () => {
-    return await db.select().from(announcements);
-}
-
-export const getFilteredAnnouncements = async (category?: string, search?: string) => {
+export const getAnnouncements = async (category?: string, search?: string) => {
     const conditions = [];
 
     if (search) {
