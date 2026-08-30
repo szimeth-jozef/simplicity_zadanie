@@ -1,6 +1,6 @@
 import { db } from "../db/index.js"
 import { announcements } from "../db/schema.js";
-import { ilike, or, and, eq, desc } from "drizzle-orm";
+import { ilike, or, and, desc, sql, type SQL } from "drizzle-orm";
 
 type CreateAnnouncementInput = {
     title: string;
@@ -25,16 +25,29 @@ export const createAnnouncement = async ({
     return createdAnnouncement.id;
 }
 
-export const getAnnouncements = async (category?: string, search?: string) => {
-    const conditions = [];
+export const getAnnouncements = async (categories: string[] = [], search?: string) => {
+    const conditions: SQL[] = [];
 
     if (search) {
-        conditions.push(
-        or(
+        const searchCondition = or(
             ilike(announcements.title, `%${search}%`),
             ilike(announcements.content, `%${search}%`)
-        )
         );
+
+        if (searchCondition) {
+            conditions.push(searchCondition);
+        }
+    }
+
+    if (categories.length > 0) {
+        const categoryConditions = categories.map((category) =>
+            sql`(',' || regexp_replace(${announcements.categories}, '[[:space:]]*,[[:space:]]*', ',', 'g') || ',') ILIKE ${`%,${category},%`}`,
+        );
+        const categoryCondition = or(...categoryConditions);
+
+        if (categoryCondition) {
+            conditions.push(categoryCondition);
+        }
     }
 
     return await db

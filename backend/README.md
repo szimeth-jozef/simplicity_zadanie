@@ -12,3 +12,7 @@ curl -X POST http://localhost:3001/api/announcements \
   -H "Content-Type: application/json" \
   -d '{"title":"Team meeting","content":"Meeting at 10:00 tomorrow.","categories":"work, meetings"}'
 ```
+
+```
+curl "http://localhost:3001/api/announcements?search=meeting&categories=work,events"
+```

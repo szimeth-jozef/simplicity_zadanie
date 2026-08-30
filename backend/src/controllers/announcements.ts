@@ -41,12 +41,35 @@ export const create = async (req: Request, res: Response) => {
 }
 
 export const getAll = async (req: Request, res: Response) => {
+    const { search, categories } = req.query;
+
+    if (
+        (search !== undefined && typeof search !== "string") ||
+        (categories !== undefined && typeof categories !== "string")
+    ) {
+        res.status(400).json({ error: "search and categories query parameters must be strings" });
+        return;
+    }
+
+    const selectedCategories = (categories ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+    if ((categories !== undefined) && selectedCategories.length === 0) {
+        res.status(400).json({ error: "categories must contain at least one category" });
+        return;
+    }
+
     try {
-        const announcements = await AnnouncementsService.getAnnouncements(undefined, "term")
+        const announcements = await AnnouncementsService.getAnnouncements(
+            selectedCategories,
+            search?.trim() || undefined,
+        );
 
         res.status(200).json(announcements)
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Failed to get all announcementa" })
+        res.status(500).json({ error: "Failed to get announcements" })
     }
 }
